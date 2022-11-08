@@ -45,6 +45,13 @@ jobs:
           saveRDS(remotes::dev_package_deps(dependencies = TRUE), "depends.Rds", version = 2)
         shell: Rscript {0}
 
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sysreqs=$(Rscript -e 'cat("apt-get update -y && apt-get install -y", paste(gsub("apt-get install -y ", "", remotes::system_requirements("ubuntu", "20.04")), collapse = " "))')
+          echo $sysreqs
+          sudo -s eval "$sysreqs"
+
       - name: Install dependencies
         run: |
           remotes::install_deps(dependencies = TRUE)
@@ -53,7 +60,8 @@ jobs:
 
       - name: Session info
         run: |
-          sessionInfo()
+          pkgs <- installed.packages()[, "Package"]
+          sessioninfo::session_info(pkgs, include_base = TRUE)
         shell: Rscript {0}
 
       - name: Check
